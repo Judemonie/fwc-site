@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#060812" />
 <title>FWC — FIFA World Cup Token | One Chain. One Game. One Passion.</title>
-<meta name="description" content="$FWC — Football. Fans. World. One Chain. The official meme token of the 2026 FIFA World Cup spirit. Live on BNB Chain." />
+<meta name="description" content="$FWC — Football Fans. World. One Chain. The official meme token of the 2026 FIFA World Cup spirit. Live on BNB Chain." />
 
 <!-- ======================================================== -->
 <!-- ===== EDIT THESE VALUES WHEN READY ===================== -->
@@ -22,19 +22,18 @@
   // For values, use plain numbers (1000000000) or strings ("1B")
   // For percentages, just the number (used in pie chart too)
   const TOKENOMICS = {
-    TOTAL_SUPPLY:  "TBA",        // e.g. "1,000,000,000" or "1B"
-    BUY_TAX:       "TBA",        // e.g. "0%"
-    SELL_TAX:      "TBA",        // e.g. "0%"
-    LP_LOCKED:     "TBA",        // e.g. "100%"
-    OWNERSHIP:     "TBA",        // e.g. "Renounced"
-    // For pie chart distribution - set percentages that add to 100
-    // Set USE_PIE: false to hide the pie chart entirely until you have numbers
-    USE_PIE: false,
+    TOTAL_SUPPLY:  "2,026,000,000",
+    BUY_TAX:       "5%",
+    SELL_TAX:      "5%",
+    LP_LOCKED:     "100%",
+    TAX_BREAKDOWN: "2.5% Liquidity · 2.5% Marketing",
+    USE_PIE: true,
     DISTRIBUTION: [
-      { label: "Liquidity",    pct: 70, color: "#D4AF37" },
-      { label: "Community",    pct: 15, color: "#C8102E" },
-      { label: "Marketing",    pct: 10, color: "#002F6C" },
-      { label: "Team/Future",  pct: 5,  color: "#009639" }
+      { label: "Liquidity Pool", pct: 50, tokens: "1,013,000,000", color: "#D4AF37" },
+      { label: "Marketing",      pct: 15, tokens: "303,900,000",   color: "#C8102E" },
+      { label: "Burn",           pct: 15, tokens: "303,900,000",   color: "#FF6B35" },
+      { label: "Team",           pct: 10, tokens: "202,600,000",   color: "#002F6C" },
+      { label: "Partnership",    pct: 10, tokens: "202,600,000",   color: "#009639" }
     ]
   };
 </script>
@@ -1039,24 +1038,36 @@
     text-transform: uppercase;
     font-weight: 700;
   }
-  .tok-legend { display: flex; flex-direction: column; gap: 0.85rem; }
+  .tok-legend { display: flex; flex-direction: column; gap: 0.4rem; }
   .legend-item {
     display: grid;
     grid-template-columns: 14px 1fr auto;
     gap: 0.85rem;
     align-items: center;
-    padding: 0.55rem 0;
+    padding: 0.65rem 0;
     border-bottom: 1px solid rgba(255,255,255,0.05);
   }
   .legend-item:last-child { border-bottom: 0; }
-  .legend-dot { width: 14px; height: 14px; border-radius: 4px; }
+  .legend-dot {
+    width: 14px; height: 14px;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .legend-text { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
   .legend-label {
-    font-size: 0.9rem; font-weight: 600;
+    font-size: 0.9rem; font-weight: 700;
     color: var(--text);
+    line-height: 1.2;
+  }
+  .legend-tokens {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-family: ui-monospace, monospace;
+    letter-spacing: 0.3px;
   }
   .legend-value {
     font-family: 'Anton', sans-serif;
-    font-size: 1.3rem;
+    font-size: 1.35rem;
     color: var(--fifa-gold-2);
     letter-spacing: 0.5px;
   }
@@ -1102,6 +1113,14 @@
     text-transform: uppercase;
     margin-top: 0.75rem;
     font-weight: 700;
+  }
+  .counter-sub {
+    color: var(--fifa-gold-2);
+    font-size: 0.68rem;
+    letter-spacing: 0.5px;
+    margin-top: 0.45rem;
+    font-weight: 600;
+    opacity: 0.85;
   }
 
   /* Flip cards */
@@ -1411,7 +1430,7 @@
     <span class="row-2">$FWC 2026</span>
   </h1>
   <div class="hero-tag">One World <span>·</span> One Game <span>·</span> One Passion</div>
-  <p class="hero-desc">Football. Fans. World. One Chain. The official meme token of the 2026 World Cup spirit, built for the global football community.</p>
+  <p class="hero-desc">Football Fans. World. One Chain. The official meme token of the 2026 World Cup spirit, built for the global football community.</p>
   <div class="hero-cta">
     <a href="#" class="btn btn-primary" id="heroBuy">Buy $FWC</a>
     <a href="#live" class="btn btn-ghost">Watch Live</a>
@@ -1613,8 +1632,8 @@
     <svg class="tok-pie-svg" viewBox="0 0 200 200" id="tokPieSvg">
       <circle class="bg-ring" cx="100" cy="100" r="80"></circle>
       <g id="pieSlices"></g>
-      <text class="tok-pie-center" x="100" y="96" id="pieCenterVal">100%</text>
-      <text class="tok-pie-center-sub" x="100" y="115">DISTRIBUTION</text>
+      <text class="tok-pie-center" x="100" y="94" id="pieCenterVal">2.026B</text>
+      <text class="tok-pie-center-sub" x="100" y="114">TOTAL SUPPLY</text>
     </svg>
     <div class="tok-legend" id="tokLegend"></div>
   </div>
@@ -1708,7 +1727,7 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>
     </a>
   </div>
-  <div class="footer-tag">Football <span>·</span> Fans <span>·</span> World <span>·</span> One Chain</div>
+  <div class="footer-tag">Football Fans <span>·</span> World <span>·</span> One Chain</div>
   <div class="footer-meta">© 2026 <strong>$FWC</strong> · Built on BNB Chain · One World. One Game. One Passion.</div>
   <div class="disclaimer">
     $FWC is a community meme token inspired by the spirit of football and the FIFA World Cup. It is not affiliated with, endorsed by, or connected to FIFA in any way. Cryptocurrency carries risk — only invest what you can afford to lose. Do your own research.
@@ -1820,7 +1839,7 @@ const tickerItems = [
   { txt: 'Kickoff June 11, 2026', red: false },
   { txt: '48 Teams · 12 Groups · 16 Cities', red: false },
   { txt: '$FWC Live On <b>BNB Chain</b>', red: false },
-  { txt: 'Football · Fans · World · One Chain', red: false },
+  { txt: 'Football Fans · World · One Chain', red: false },
   { txt: 'Hosted by <b>USA · Canada · Mexico</b>', red: false },
   { txt: 'Final on <b>July 19, 2026</b> · MetLife Stadium', red: false },
   { txt: 'First-ever <b>48-team</b> FIFA World Cup', red: false }
@@ -1906,7 +1925,10 @@ function renderPie() {
   document.getElementById('tokLegend').innerHTML = dist.map(d =>
     '<div class="legend-item">' +
       '<span class="legend-dot" style="background:' + d.color + '"></span>' +
-      '<span class="legend-label">' + d.label + '</span>' +
+      '<div class="legend-text">' +
+        '<div class="legend-label">' + d.label + '</div>' +
+        (d.tokens ? '<div class="legend-tokens">' + d.tokens + ' $FWC</div>' : '') +
+      '</div>' +
       '<span class="legend-value">' + d.pct + '%</span>' +
     '</div>'
   ).join('');
@@ -1917,16 +1939,16 @@ renderPie();
 // TOKENOMICS - COUNTER CARDS
 //============================================================
 const counterDefs = [
-  { val: TOKENOMICS.TOTAL_SUPPLY, lbl: 'Total Supply' },
-  { val: TOKENOMICS.BUY_TAX + ' / ' + TOKENOMICS.SELL_TAX, lbl: 'Buy / Sell Tax' },
-  { val: TOKENOMICS.LP_LOCKED, lbl: 'Liquidity Locked' },
-  { val: TOKENOMICS.OWNERSHIP, lbl: 'Contract Ownership' },
-  { val: 'BSC', lbl: 'Network' }
+  { val: TOKENOMICS.TOTAL_SUPPLY, lbl: 'Total Supply', sub: '$FWC' },
+  { val: TOKENOMICS.BUY_TAX + ' / ' + TOKENOMICS.SELL_TAX, lbl: 'Buy / Sell Tax', sub: TOKENOMICS.TAX_BREAKDOWN },
+  { val: TOKENOMICS.LP_LOCKED, lbl: 'Liquidity Locked', sub: 'Forever Secured' },
+  { val: 'BSC', lbl: 'Network', sub: 'BNB Chain' }
 ];
 document.getElementById('tokCounters').innerHTML = counterDefs.map(c =>
   '<div class="counter-card">' +
     '<div class="counter-val" data-target="' + c.val + '">' + c.val + '</div>' +
     '<div class="counter-lbl">' + c.lbl + '</div>' +
+    (c.sub ? '<div class="counter-sub">' + c.sub + '</div>' : '') +
   '</div>'
 ).join('');
 
