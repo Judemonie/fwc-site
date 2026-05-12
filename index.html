@@ -78,6 +78,11 @@
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  /* Smooth iframe loads */
+  iframe { transition: opacity 0.5s ease; }
+  iframe[src=""] { opacity: 0; }
+  /* Smooth transitions on hover for everything interactive */
+  a, button { transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease; }
   body {
     font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg);
@@ -851,6 +856,39 @@
     text-align: center; padding: 2rem; color: var(--text-dim);
   }
   .chart-empty strong { color: var(--text); display: block; margin-bottom: 0.4rem; }
+  .chart-skeleton {
+    height: 500px;
+    display: grid;
+    place-items: center;
+    background:
+      linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.04) 50%, transparent 100%),
+      linear-gradient(180deg, rgba(0, 47, 108, 0.08), rgba(200, 16, 46, 0.04));
+    background-size: 200% 100%, 100% 100%;
+    animation: shimmerBg 2s linear infinite;
+    position: relative;
+  }
+  .chart-skel-spinner {
+    width: 42px;
+    height: 42px;
+    border: 3px solid rgba(212, 175, 55, 0.15);
+    border-top-color: var(--fifa-gold);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    margin-bottom: 0.85rem;
+    margin-left: auto; margin-right: auto;
+  }
+  .chart-skel-text {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  @keyframes shimmerBg {
+    0% { background-position: -100% 0, 0 0; }
+    100% { background-position: 100% 0, 0 0; }
+  }
   .tx-list { max-height: 500px; overflow-y: auto; }
   .tx-list::-webkit-scrollbar { width: 5px; }
   .tx-list::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.25); border-radius: 3px; }
@@ -1771,39 +1809,39 @@
 
   <div class="player-card">
     <div class="player-head">
-      <h3 id="playerTitle">FIFA OFFICIAL · LATEST UPLOADS</h3>
+      <h3 id="playerTitle">WORLD CUP 2026 · LATEST HIGHLIGHTS</h3>
       <span class="live-badge">LIVE</span>
     </div>
     <div class="player-tabs" id="playerTabs">
       <button class="player-tab active"
-        data-src="https://www.youtube.com/embed?listType=user_uploads&list=FIFATV"
-        data-channel="https://www.youtube.com/@FIFATV"
-        data-title="FIFA OFFICIAL · LATEST UPLOADS">FIFA Official</button>
-      <button class="player-tab"
-        data-src="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+2026+highlights"
+        data-src="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+2026+highlights+today"
         data-channel="https://www.youtube.com/results?search_query=FIFA+World+Cup+2026+highlights"
-        data-title="WORLD CUP 2026 · LATEST HIGHLIGHTS">2026 Highlights</button>
+        data-title="WORLD CUP 2026 · LATEST HIGHLIGHTS">Latest Highlights</button>
       <button class="player-tab"
-        data-src="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+2026+live+full+match"
+        data-src="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+2026+live+full+match+today"
         data-channel="https://www.youtube.com/results?search_query=FIFA+World+Cup+2026+live"
         data-title="LIVE COVERAGE · FULL MATCHES">Live Coverage</button>
       <button class="player-tab"
-        data-src="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+goals+best"
-        data-channel="https://www.youtube.com/results?search_query=FIFA+World+Cup+best+goals"
-        data-title="WORLD CUP · BEST GOALS">Best Goals</button>
+        data-src="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+2026+best+goals"
+        data-channel="https://www.youtube.com/results?search_query=FIFA+World+Cup+2026+best+goals"
+        data-title="WORLD CUP 2026 · BEST GOALS">Best Goals</button>
       <button class="player-tab"
-        data-src="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+classic+matches+full"
-        data-channel="https://www.youtube.com/results?search_query=FIFA+World+Cup+classic+full+match"
-        data-title="CLASSIC FULL MATCHES">Classic Matches</button>
+        data-src="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+legendary+matches+full+90+minutes"
+        data-channel="https://www.youtube.com/results?search_query=FIFA+World+Cup+legendary+matches+full"
+        data-title="LEGENDARY FULL MATCHES">Classic Matches</button>
       <button class="player-tab"
-        data-src="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+2026+news+today"
+        data-src="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+2026+news+today+latest"
         data-channel="https://www.youtube.com/results?search_query=FIFA+World+Cup+2026+news"
-        data-title="WORLD CUP · LATEST NEWS">News &amp; Updates</button>
+        data-title="WORLD CUP 2026 · LATEST NEWS">News &amp; Updates</button>
+      <button class="player-tab"
+        data-src="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+2026+countdown+road+to+kickoff"
+        data-channel="https://www.youtube.com/results?search_query=FIFA+World+Cup+2026+countdown"
+        data-title="ROAD TO 2026">Road to 2026</button>
     </div>
     <div class="player-stream">
       <iframe id="playerFrame"
-        src="https://www.youtube.com/embed?listType=user_uploads&list=FIFATV"
-        title="FIFA Official"
+        src="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+2026+highlights+today"
+        title="World Cup Highlights"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowfullscreen></iframe>
     </div>
@@ -1877,7 +1915,7 @@
         <div class="bc-sub">Canada · English</div>
         <div class="bc-cta">Watch Live →</div>
       </a>
-      <a href="https://www.youtube.com/@FIFATV/live" target="_blank" rel="noopener" class="broadcaster-card" data-region="Global" data-name="YouTube Live" data-embed="https://www.youtube.com/embed?listType=user_uploads&list=FIFATV">
+      <a href="https://www.youtube.com/results?search_query=FIFA+World+Cup+2026+live" target="_blank" rel="noopener" class="broadcaster-card" data-region="Global" data-name="YouTube Live" data-embed="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+2026+live+full+match+today">
         <div class="bc-name">YouTube Live</div>
         <div class="bc-sub">FIFA partner</div>
         <div class="bc-cta">Watch Live →</div>
@@ -1900,11 +1938,9 @@
         <span class="live-badge">LIVE</span>
       </div>
       <div id="chartContainer">
-        <div class="chart-empty">
-          <div>
-            <strong>Chart unlocks when CA is set</strong>
-            Update FWC_CONFIG.CONTRACT_ADDRESS at top of file.
-          </div>
+        <div class="chart-skeleton">
+          <div class="chart-skel-spinner"></div>
+          <div class="chart-skel-text">Loading live chart...</div>
         </div>
       </div>
     </div>
@@ -2626,26 +2662,35 @@ document.querySelectorAll('.player-tab').forEach(tab => {
 //============================================================
 // DEXSCREENER
 //============================================================
+// Load chart iframe IMMEDIATELY using CA - DexScreener auto-resolves it
+// API call runs in parallel only for the tx feed
+let chartLoaded = false;
+function loadChartImmediately() {
+  if (isPlaceholder || chartLoaded) return;
+  chartLoaded = true;
+  document.getElementById('chartContainer').innerHTML =
+    '<iframe class="chart-frame" loading="lazy" src="https://dexscreener.com/bsc/' + CA +
+    '?embed=1&theme=dark&trades=0&info=0" frameborder="0" allowfullscreen></iframe>';
+}
+
 async function loadDex() {
   if (isPlaceholder) return;
+  // Fire chart immediately
+  loadChartImmediately();
+  // API call only for the transactions feed
   try {
-    const res = await fetch('https://api.dexscreener.com/latest/dex/tokens/' + CA);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 6000);
+    const res = await fetch('https://api.dexscreener.com/latest/dex/tokens/' + CA, { signal: controller.signal });
+    clearTimeout(timer);
     const data = await res.json();
     if (!data.pairs || !data.pairs.length) return;
-
     const bscPairs = data.pairs.filter(p => p.chainId === 'bsc');
     if (!bscPairs.length) return;
-
     const pair = (FWC_CONFIG.DEXSCREENER_PAIR
       ? bscPairs.find(p => p.pairAddress.toLowerCase() === FWC_CONFIG.DEXSCREENER_PAIR.toLowerCase())
       : null) || bscPairs.sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0))[0];
-
     if (!pair) return;
-
-    document.getElementById('chartContainer').innerHTML =
-      '<iframe class="chart-frame" src="https://dexscreener.com/bsc/' + pair.pairAddress +
-      '?embed=1&theme=dark&trades=0&info=0" frameborder="0" allowfullscreen></iframe>';
-
     renderTxFeed(pair);
   } catch (e) {
     console.warn('DexScreener fetch failed:', e);
@@ -2681,6 +2726,8 @@ function renderTxFeed(pair) {
     '</div>'
   ).join('');
 }
+// Kick off chart load instantly (synchronously sets the iframe)
+loadChartImmediately();
 loadDex();
 setInterval(loadDex, 30000);
 
@@ -2698,31 +2745,57 @@ async function checkBalance() {
   const amountEl = document.getElementById('resultAmount');
 
   if (isPlaceholder) { amountEl.textContent = 'CA not set'; resultBox.classList.add('show'); return; }
-  if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) { amountEl.textContent = 'Invalid'; resultBox.classList.add('show'); return; }
+  if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) { amountEl.textContent = 'Invalid address'; resultBox.classList.add('show'); return; }
 
   amountEl.textContent = 'Loading...';
   resultBox.classList.add('show');
 
-  try {
-    const data = '0x70a08231' + '000000000000000000000000' + wallet.slice(2).toLowerCase();
-    const res = await fetch('https://bsc-dataseed.binance.org/', {
+  // Multiple public BSC RPC endpoints — race them in parallel and use the first to respond
+  const BSC_RPCS = [
+    'https://bsc-dataseed.binance.org/',
+    'https://bsc-dataseed1.defibit.io/',
+    'https://bsc-dataseed1.ninicoin.io/',
+    'https://bsc.publicnode.com',
+    'https://1rpc.io/bnb',
+    'https://rpc.ankr.com/bsc'
+  ];
+
+  const data = '0x70a08231' + '000000000000000000000000' + wallet.slice(2).toLowerCase();
+  const body = JSON.stringify({ jsonrpc: '2.0', method: 'eth_call', params: [{ to: CA, data: data }, 'latest'], id: 1 });
+
+  // Race all RPCs - whoever responds first wins
+  function tryRpc(url, timeoutMs) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_call', params: [{ to: CA, data: data }, 'latest'], id: 1 })
+      body: body,
+      signal: controller.signal
+    })
+    .then(r => r.json())
+    .then(j => {
+      clearTimeout(timer);
+      if (!j.result) throw new Error('empty');
+      return j.result;
+    })
+    .catch(err => {
+      clearTimeout(timer);
+      throw err;
     });
-    const json = await res.json();
-    if (!json.result) throw new Error('No result');
+  }
 
-    const raw = BigInt(json.result);
+  try {
+    const result = await Promise.any(BSC_RPCS.map(url => tryRpc(url, 4000)));
+    const raw = BigInt(result);
     const divisor = 10n ** 18n;
     const whole = raw / divisor;
     const fraction = raw % divisor;
     const display = Number(whole) + Number(fraction) / Number(divisor);
-
     amountEl.textContent = display.toLocaleString(undefined, { maximumFractionDigits: 2 });
   } catch (err) {
-    console.error(err);
-    amountEl.textContent = 'Error';
+    console.error('All RPCs failed:', err);
+    amountEl.textContent = 'Try again';
   }
 }
 
