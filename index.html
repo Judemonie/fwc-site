@@ -21,7 +21,7 @@
 <!-- ======================================================== -->
 <script>
   const FWC_CONFIG = {
-    CONTRACT_ADDRESS: "0x0000000000000000000000000000000000000000",
+    CONTRACT_ADDRESS: "0xc7bed3005277ef43f0ab87ca60ad7b8f690be33d",
     X_LINK:           "https://x.com/",
     TELEGRAM_LINK:    "https://t.me/",
     DEXSCREENER_PAIR: ""
@@ -35,7 +35,7 @@
     BUY_TAX:       "5%",
     SELL_TAX:      "5%",
     LP_LOCKED:     "100%",
-    TAX_BREAKDOWN: "2.5% Liquidity · 2.5% Marketing",
+    TAX_BREAKDOWN: "Buy → Liquidity · Sell → Marketing",
     USE_PIE: true,
     DISTRIBUTION: [
       { label: "Liquidity Pool", pct: 50, tokens: "1,013,000,000", color: "#D4AF37" },
@@ -726,6 +726,109 @@
   .player-foot a { color: var(--fifa-gold-2); text-decoration: none; }
   .player-foot a:hover { text-decoration: underline; }
 
+  /* ===== BROADCASTER LAUNCHER ROW ===== */
+  .broadcaster-row {
+    margin-top: 1.5rem;
+    background: linear-gradient(135deg, var(--card), var(--card-2));
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 1.75rem 1.5rem;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+  }
+  .broadcaster-row::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--fifa-blue), var(--fifa-gold), var(--fifa-red));
+  }
+  .broadcaster-row-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .broadcaster-row-tag {
+    font-size: 0.65rem;
+    letter-spacing: 3.5px;
+    color: var(--fifa-red);
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+  }
+  .broadcaster-row-title {
+    font-family: 'Anton', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 1px;
+    color: var(--text);
+  }
+  .broadcaster-row-meta {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .broadcaster-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 0.85rem;
+  }
+  .broadcaster-card {
+    position: relative;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 1rem 1.1rem 1.1rem;
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.25s;
+    overflow: hidden;
+  }
+  .broadcaster-card::after {
+    content: attr(data-region);
+    position: absolute;
+    top: 0.7rem;
+    right: 0.8rem;
+    font-size: 0.55rem;
+    color: var(--fifa-gold-2);
+    background: rgba(212, 175, 55, 0.12);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    border: 1px solid rgba(212, 175, 55, 0.25);
+  }
+  .broadcaster-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--line-strong);
+    background: rgba(212, 175, 55, 0.06);
+  }
+  .bc-name {
+    font-family: 'Anton', sans-serif;
+    font-size: 1.05rem;
+    letter-spacing: 1.5px;
+    color: var(--text);
+    margin-bottom: 0.3rem;
+    padding-right: 3rem;
+  }
+  .bc-sub {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-bottom: 0.7rem;
+  }
+  .bc-cta {
+    font-size: 0.7rem;
+    color: var(--fifa-gold-2);
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    transition: gap 0.2s;
+  }
+  .broadcaster-card:hover .bc-cta { color: var(--fifa-gold); }
+
   /* ===== DATA GRID ===== */
   .data-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 1.25rem; }
   .data-card {
@@ -1311,6 +1414,176 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  /* ===== WATCH OVERLAY ===== */
+  .watch-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .watch-overlay.open {
+    display: flex;
+    opacity: 1;
+  }
+  .watch-overlay-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.88);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .watch-overlay-shell {
+    position: relative;
+    width: 100%;
+    max-width: 1100px;
+    max-height: calc(100vh - 3rem);
+    background: var(--card);
+    border: 1px solid var(--line-strong);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(212, 175, 55, 0.08);
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.95);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .watch-overlay.open .watch-overlay-shell { transform: scale(1); }
+  .watch-overlay-head {
+    padding: 1rem 1.25rem;
+    background: linear-gradient(90deg, rgba(0, 47, 108, 0.5), rgba(200, 16, 46, 0.3));
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+  .watch-overlay-tag {
+    font-size: 0.6rem;
+    letter-spacing: 3px;
+    color: var(--fifa-gold-2);
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-bottom: 0.2rem;
+  }
+  .watch-overlay-title {
+    font-family: 'Anton', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 1.5px;
+    color: var(--text);
+  }
+  .watch-overlay-close {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: var(--text);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .watch-overlay-close:hover {
+    background: var(--fifa-red);
+    border-color: var(--fifa-red);
+    transform: rotate(90deg);
+  }
+  .watch-overlay-body {
+    position: relative;
+    background: #000;
+    aspect-ratio: 16 / 9;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .watch-overlay-body iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+  .watch-overlay-foot {
+    padding: 0;
+    background: rgba(0,0,0,0.4);
+  }
+  .watch-fallback {
+    padding: 1.75rem 1.5rem;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1rem;
+    align-items: center;
+  }
+  .watch-fallback-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(212, 175, 55, 0.12);
+    border: 1px solid var(--line);
+    color: var(--fifa-gold-2);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .watch-fallback-title {
+    font-weight: 800;
+    color: var(--text);
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+  }
+  .watch-fallback-sub {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+  .watch-fallback-btn {
+    background: linear-gradient(135deg, var(--fifa-red), var(--fifa-red-2));
+    color: #fff;
+    text-decoration: none;
+    padding: 0.85rem 1.4rem;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 0.78rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    box-shadow: 0 6px 20px rgba(200, 16, 46, 0.35);
+    transition: transform 0.2s, box-shadow 0.2s;
+    flex-shrink: 0;
+  }
+  .watch-fallback-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 28px rgba(200, 16, 46, 0.5);
+  }
+  /* Loading state inside body */
+  .watch-loading {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    background: #000;
+    z-index: 1;
+  }
+  .watch-loading-spinner {
+    width: 38px;
+    height: 38px;
+    border: 2px solid rgba(212, 175, 55, 0.2);
+    border-top-color: var(--fifa-gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 0.85rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .watch-loading-text { text-align: center; }
+  body.overlay-open { overflow: hidden; }
+
   /* ===== RESPONSIVE ===== */
   @media (max-width: 860px) {
     .nav-links {
@@ -1338,6 +1611,27 @@
     .section-head { margin-bottom: 2.25rem; }
     .player-head { padding: 0.9rem 1.1rem; }
     .player-tab { padding: 0.8rem 1.1rem; font-size: 0.74rem; }
+    .broadcaster-row { padding: 1.25rem 1rem; }
+    .broadcaster-grid { grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
+    .broadcaster-card { padding: 0.85rem 0.9rem; }
+    .bc-name { font-size: 0.9rem; padding-right: 2.5rem; }
+    .bc-sub { font-size: 0.65rem; }
+    .broadcaster-card::after { font-size: 0.5rem; top: 0.55rem; right: 0.55rem; padding: 0.1rem 0.35rem; }
+    .broadcaster-row-head { margin-bottom: 1rem; }
+    .broadcaster-row-title { font-size: 1.15rem; }
+    .watch-overlay { padding: 0.75rem; }
+    .watch-overlay-shell { max-height: calc(100vh - 1.5rem); }
+    .watch-overlay-head { padding: 0.85rem 1rem; }
+    .watch-overlay-title { font-size: 0.95rem; letter-spacing: 1px; }
+    .watch-overlay-close { width: 34px; height: 34px; }
+    .watch-fallback {
+      grid-template-columns: 1fr;
+      text-align: center;
+      gap: 0.85rem;
+      padding: 1.25rem;
+    }
+    .watch-fallback-icon { margin: 0 auto; }
+    .watch-fallback-btn { width: 100%; padding: 0.85rem 1rem; }
     .checker-card { padding: 1.75rem 1.1rem; }
     .checker-row input { min-width: 100%; }
     .ca-bar { padding: 1.1rem; flex-direction: column; align-items: stretch; text-align: center; }
@@ -1472,30 +1766,122 @@
   <div class="section-head">
     <div class="section-tag">Live Match Center</div>
     <h2>Watch The Match <span class="accent">On FWC</span></h2>
-    <p class="section-sub">Live streams, official highlights, and match coverage embedded right here. Switch tabs to find the broadcast for your region.</p>
+    <p class="section-sub">YouTube content streams directly on the page. Broadcaster cards below launch their official live feed in one tap — pick whatever works in your region.</p>
   </div>
+
   <div class="player-card">
     <div class="player-head">
-      <h3 id="playerTitle">FIFA OFFICIAL · LIVE COVERAGE</h3>
+      <h3 id="playerTitle">FIFA OFFICIAL · LATEST UPLOADS</h3>
       <span class="live-badge">LIVE</span>
     </div>
     <div class="player-tabs" id="playerTabs">
-      <button class="player-tab active" data-src="https://www.youtube.com/embed/live_stream?channel=UCpcTrCXblq78GZrTUTLWeBw&autoplay=0" data-title="FIFA OFFICIAL · LIVE COVERAGE">FIFA Official</button>
-      <button class="player-tab" data-src="https://www.youtube.com/embed/videoseries?list=PLR2Drb1eaepNDpsQAcsNL_lJjzgvB7yRm" data-title="WORLD CUP 2026 · HIGHLIGHTS REEL">2026 Highlights</button>
-      <button class="player-tab" data-src="https://www.youtube.com/embed/live_stream?channel=UCwqusr8YDwM-3mEYTDeJHzw" data-title="FOX SOCCER · LIVE">FOX Soccer</button>
-      <button class="player-tab" data-src="https://www.youtube.com/embed/live_stream?channel=UCNAf1k0yIjyGu3k9BwAg3lg" data-title="SKY SPORTS NEWS · LIVE">Sky Sports</button>
-      <button class="player-tab" data-src="https://www.youtube.com/embed/live_stream?channel=UCkM1uPnYIocYqPYHE3D-rmw" data-title="BEIN SPORTS · LIVE">beIN Sports</button>
-      <button class="player-tab" data-src="https://www.youtube.com/embed/videoseries?list=PLeAvT4dl05qZQXKUg-7l34tVwAa66TBlk" data-title="WORLD CUP CLASSIC MATCHES">Classic Matches</button>
+      <button class="player-tab active"
+        data-src="https://www.youtube.com/embed?listType=user_uploads&list=FIFATV"
+        data-channel="https://www.youtube.com/@FIFATV"
+        data-title="FIFA OFFICIAL · LATEST UPLOADS">FIFA Official</button>
+      <button class="player-tab"
+        data-src="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+2026+highlights"
+        data-channel="https://www.youtube.com/results?search_query=FIFA+World+Cup+2026+highlights"
+        data-title="WORLD CUP 2026 · LATEST HIGHLIGHTS">2026 Highlights</button>
+      <button class="player-tab"
+        data-src="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+2026+live+full+match"
+        data-channel="https://www.youtube.com/results?search_query=FIFA+World+Cup+2026+live"
+        data-title="LIVE COVERAGE · FULL MATCHES">Live Coverage</button>
+      <button class="player-tab"
+        data-src="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+goals+best"
+        data-channel="https://www.youtube.com/results?search_query=FIFA+World+Cup+best+goals"
+        data-title="WORLD CUP · BEST GOALS">Best Goals</button>
+      <button class="player-tab"
+        data-src="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+classic+matches+full"
+        data-channel="https://www.youtube.com/results?search_query=FIFA+World+Cup+classic+full+match"
+        data-title="CLASSIC FULL MATCHES">Classic Matches</button>
+      <button class="player-tab"
+        data-src="https://www.youtube.com/embed?listType=search&list=FIFA+World+Cup+2026+news+today"
+        data-channel="https://www.youtube.com/results?search_query=FIFA+World+Cup+2026+news"
+        data-title="WORLD CUP · LATEST NEWS">News &amp; Updates</button>
     </div>
     <div class="player-stream">
       <iframe id="playerFrame"
-        src="https://www.youtube.com/embed/live_stream?channel=UCpcTrCXblq78GZrTUTLWeBw"
-        title="FIFA Official Live Stream"
+        src="https://www.youtube.com/embed?listType=user_uploads&list=FIFATV"
+        title="FIFA Official"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowfullscreen></iframe>
     </div>
     <div class="player-foot">
-      Stream availability depends on your region and broadcaster rights. If a stream isn't live, scroll to <a href="#watch">official broadcasters below</a> or check <a href="https://www.fifa.com/fifaplus/en/home" target="_blank" rel="noopener">FIFA+</a> directly.
+      <strong style="color: var(--text);">Tip:</strong> YouTube tabs play directly on this page. If you'd rather watch on an official broadcaster's site, tap any card below to launch their live feed — most stream full World Cup matches in HD with regional commentary.
+    </div>
+  </div>
+
+  <!-- Broadcaster launcher row -->
+  <div class="broadcaster-row">
+    <div class="broadcaster-row-head">
+      <div>
+        <div class="broadcaster-row-tag">Official Broadcasters</div>
+        <div class="broadcaster-row-title">Watch In Pop-Out Player</div>
+      </div>
+      <div class="broadcaster-row-meta">12 networks · Pop-out player</div>
+    </div>
+    <div class="broadcaster-grid" id="broadcasterGrid">
+      <a href="https://www.fifa.com/fifaplus/en/home" target="_blank" rel="noopener" class="broadcaster-card" data-region="Global" data-name="FIFA+" data-embed="https://www.fifa.com/fifaplus/en/home">
+        <div class="bc-name">FIFA+</div>
+        <div class="bc-sub">Official streaming</div>
+        <div class="bc-cta">Watch Live →</div>
+      </a>
+      <a href="https://www.foxsports.com/live" target="_blank" rel="noopener" class="broadcaster-card" data-region="USA" data-name="FOX Sports" data-embed="https://www.foxsports.com/live">
+        <div class="bc-name">FOX Sports</div>
+        <div class="bc-sub">USA · English</div>
+        <div class="bc-cta">Watch Live →</div>
+      </a>
+      <a href="https://www.telemundodeportes.com/" target="_blank" rel="noopener" class="broadcaster-card" data-region="USA" data-name="Telemundo" data-embed="https://www.telemundodeportes.com/">
+        <div class="bc-name">Telemundo</div>
+        <div class="bc-sub">USA · Spanish</div>
+        <div class="bc-cta">Watch Live →</div>
+      </a>
+      <a href="https://www.bbc.co.uk/iplayer/live/bbcone" target="_blank" rel="noopener" class="broadcaster-card" data-region="UK" data-name="BBC iPlayer" data-embed="https://www.bbc.co.uk/iplayer/live/bbcone">
+        <div class="bc-name">BBC iPlayer</div>
+        <div class="bc-sub">UK · Free</div>
+        <div class="bc-cta">Watch Live →</div>
+      </a>
+      <a href="https://www.itv.com/watch/itv1" target="_blank" rel="noopener" class="broadcaster-card" data-region="UK" data-name="ITVX" data-embed="https://www.itv.com/watch/itv1">
+        <div class="bc-name">ITVX</div>
+        <div class="bc-sub">UK · Free</div>
+        <div class="bc-cta">Watch Live →</div>
+      </a>
+      <a href="https://www.dazn.com/" target="_blank" rel="noopener" class="broadcaster-card" data-region="Global" data-name="DAZN" data-embed="https://www.dazn.com/">
+        <div class="bc-name">DAZN</div>
+        <div class="bc-sub">Global streaming</div>
+        <div class="bc-cta">Watch Live →</div>
+      </a>
+      <a href="https://www.beinsports.com/en/live" target="_blank" rel="noopener" class="broadcaster-card" data-region="MENA" data-name="beIN Sports" data-embed="https://www.beinsports.com/en/live">
+        <div class="bc-name">beIN Sports</div>
+        <div class="bc-sub">MENA · Asia</div>
+        <div class="bc-cta">Watch Live →</div>
+      </a>
+      <a href="https://www.skysports.com/watch" target="_blank" rel="noopener" class="broadcaster-card" data-region="UK" data-name="Sky Sports" data-embed="https://www.skysports.com/watch">
+        <div class="bc-name">Sky Sports</div>
+        <div class="bc-sub">UK premium</div>
+        <div class="bc-cta">Watch Live →</div>
+      </a>
+      <a href="https://tudn.com/en-vivo" target="_blank" rel="noopener" class="broadcaster-card" data-region="LATAM" data-name="TUDN" data-embed="https://tudn.com/en-vivo">
+        <div class="bc-name">TUDN</div>
+        <div class="bc-sub">LATAM · Spanish</div>
+        <div class="bc-cta">Watch Live →</div>
+      </a>
+      <a href="https://www.sportsmax.tv/" target="_blank" rel="noopener" class="broadcaster-card" data-region="Africa" data-name="SuperSport" data-embed="https://www.sportsmax.tv/">
+        <div class="bc-name">SuperSport</div>
+        <div class="bc-sub">Africa coverage</div>
+        <div class="bc-cta">Watch Live →</div>
+      </a>
+      <a href="https://www.ctvnews.ca/video/c2885002-ctv-news-channel-live" target="_blank" rel="noopener" class="broadcaster-card" data-region="Canada" data-name="CTV" data-embed="https://www.ctvnews.ca/video/c2885002-ctv-news-channel-live">
+        <div class="bc-name">CTV</div>
+        <div class="bc-sub">Canada · English</div>
+        <div class="bc-cta">Watch Live →</div>
+      </a>
+      <a href="https://www.youtube.com/@FIFATV/live" target="_blank" rel="noopener" class="broadcaster-card" data-region="Global" data-name="YouTube Live" data-embed="https://www.youtube.com/embed?listType=user_uploads&list=FIFATV">
+        <div class="bc-name">YouTube Live</div>
+        <div class="bc-sub">FIFA partner</div>
+        <div class="bc-cta">Watch Live →</div>
+      </a>
     </div>
   </div>
 </section>
@@ -1744,6 +2130,39 @@
 </footer>
 
 <div class="toast" id="toast">Copied</div>
+
+<!-- WATCH OVERLAY -->
+<div class="watch-overlay" id="watchOverlay" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="watch-overlay-backdrop" id="watchOverlayBackdrop"></div>
+  <div class="watch-overlay-shell">
+    <div class="watch-overlay-head">
+      <div class="watch-overlay-titlewrap">
+        <div class="watch-overlay-tag">Now Watching</div>
+        <div class="watch-overlay-title" id="watchOverlayTitle">Loading...</div>
+      </div>
+      <button class="watch-overlay-close" id="watchOverlayClose" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <path d="M6 6l12 12M18 6L6 18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="watch-overlay-body" id="watchOverlayBody">
+      <!-- iframe injected via JS -->
+    </div>
+    <div class="watch-overlay-foot" id="watchOverlayFoot" style="display:none;">
+      <div class="watch-fallback">
+        <div class="watch-fallback-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        </div>
+        <div class="watch-fallback-text">
+          <div class="watch-fallback-title">This broadcaster doesn't allow embedding</div>
+          <div class="watch-fallback-sub">Most premium broadcasters block in-page streaming for licensing reasons. Open their official live page in a new tab — it takes one tap.</div>
+        </div>
+        <a href="#" id="watchOverlayExternal" target="_blank" rel="noopener" class="watch-fallback-btn">Open Official Page →</a>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- FLAGS DATA -->
 <script>const FLAGS = {"MEX":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"20\" height=\"40\" fill=\"#006847\"/><rect x=\"20\" width=\"20\" height=\"40\" fill=\"#fff\"/><rect x=\"40\" width=\"20\" height=\"40\" fill=\"#CE1126\"/><circle cx=\"30\" cy=\"20\" r=\"4\" fill=\"none\" stroke=\"#8B4513\" stroke-width=\"0.8\"/></svg>","RSA":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#fff\"/><path d=\"M0 0 L25 20 L0 40 Z\" fill=\"#000\"/><path d=\"M0 0 L0 13 L18 20 L0 27 L0 40 L60 40 L60 27 L25 20 L60 13 L60 0 Z\" fill=\"#007749\"/><path d=\"M0 0 L0 5 L20 20 L0 35 L0 40 L7 40 L30 20 L7 0 Z\" fill=\"#FFB81C\"/><rect y=\"33\" x=\"20\" width=\"40\" height=\"7\" fill=\"#001489\"/><rect y=\"0\" x=\"20\" width=\"40\" height=\"7\" fill=\"#DE3831\"/></svg>","KOR":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#fff\"/><circle cx=\"30\" cy=\"20\" r=\"8\" fill=\"#CD2E3A\"/><path d=\"M22 20 A8 8 0 0 1 30 12 A4 4 0 0 1 30 20 A4 4 0 0 0 30 28 A8 8 0 0 1 22 20\" fill=\"#0047A0\"/><g fill=\"#000\" stroke=\"none\"><rect x=\"8\" y=\"8\" width=\"6\" height=\"1\"/><rect x=\"8\" y=\"10\" width=\"6\" height=\"1\"/><rect x=\"8\" y=\"12\" width=\"6\" height=\"1\"/><rect x=\"46\" y=\"8\" width=\"6\" height=\"1\"/><rect x=\"46\" y=\"10\" width=\"6\" height=\"1\"/><rect x=\"46\" y=\"12\" width=\"6\" height=\"1\"/><rect x=\"8\" y=\"28\" width=\"6\" height=\"1\"/><rect x=\"8\" y=\"30\" width=\"6\" height=\"1\"/><rect x=\"8\" y=\"32\" width=\"6\" height=\"1\"/><rect x=\"46\" y=\"28\" width=\"6\" height=\"1\"/><rect x=\"46\" y=\"30\" width=\"6\" height=\"1\"/><rect x=\"46\" y=\"32\" width=\"6\" height=\"1\"/></g></svg>","CZE":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"20\" fill=\"#fff\"/><rect y=\"20\" width=\"60\" height=\"20\" fill=\"#D7141A\"/><path d=\"M0 0 L30 20 L0 40 Z\" fill=\"#11457E\"/></svg>","CAN":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"15\" height=\"40\" fill=\"#D52B1E\"/><rect x=\"15\" width=\"30\" height=\"40\" fill=\"#fff\"/><rect x=\"45\" width=\"15\" height=\"40\" fill=\"#D52B1E\"/><path d=\"M30 11 L31.5 14.5 L35 14 L33 17 L36 19 L32 19.5 L32.5 22 L30 20.5 L27.5 22 L28 19.5 L24 19 L27 17 L25 14 L28.5 14.5 Z\" fill=\"#D52B1E\"/></svg>","BIH":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#002F6C\"/><path d=\"M18 0 L42 40 L60 40 L60 0 Z\" fill=\"#FECB00\"/><g fill=\"#fff\"><path d=\"M22 2 L24 6 L20 6 Z\"/><path d=\"M27 6 L29 10 L25 10 Z\"/><path d=\"M32 10 L34 14 L30 14 Z\"/><path d=\"M37 14 L39 18 L35 18 Z\"/><path d=\"M42 18 L44 22 L40 22 Z\"/><path d=\"M47 22 L49 26 L45 26 Z\"/><path d=\"M52 26 L54 30 L50 30 Z\"/><path d=\"M57 30 L59 34 L55 34 Z\"/></g></svg>","QAT":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#8D1B3D\"/><path d=\"M0 0 L20 0 L18 2.5 L20 5 L18 7.5 L20 10 L18 12.5 L20 15 L18 17.5 L20 20 L18 22.5 L20 25 L18 27.5 L20 30 L18 32.5 L20 35 L18 37.5 L20 40 L0 40 Z\" fill=\"#fff\"/></svg>","SUI":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#DA291C\"/><rect x=\"25\" y=\"11\" width=\"10\" height=\"18\" fill=\"#fff\"/><rect x=\"21\" y=\"15\" width=\"18\" height=\"10\" fill=\"#fff\"/></svg>","BRA":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#009C3B\"/><path d=\"M30 6 L52 20 L30 34 L8 20 Z\" fill=\"#FFDF00\"/><circle cx=\"30\" cy=\"20\" r=\"8\" fill=\"#002776\"/><path d=\"M22 18 Q30 22 38 18\" stroke=\"#fff\" stroke-width=\"0.8\" fill=\"none\"/></svg>","MAR":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#C1272D\"/><path d=\"M30 12 L31.8 17.5 L37.5 17.5 L32.9 21 L34.7 26.5 L30 23 L25.3 26.5 L27.1 21 L22.5 17.5 L28.2 17.5 Z\" fill=\"none\" stroke=\"#006233\" stroke-width=\"0.8\"/></svg>","HAI":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"20\" fill=\"#00209F\"/><rect y=\"20\" width=\"60\" height=\"20\" fill=\"#D21034\"/><rect x=\"22\" y=\"14\" width=\"16\" height=\"12\" fill=\"#fff\"/></svg>","SCO":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#0065BD\"/><path d=\"M0 0 L60 40 M60 0 L0 40\" stroke=\"#fff\" stroke-width=\"5\"/></svg>","USA":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#fff\"/><g fill=\"#B22234\"><rect y=\"0\" width=\"60\" height=\"3\"/><rect y=\"6\" width=\"60\" height=\"3\"/><rect y=\"12\" width=\"60\" height=\"3\"/><rect y=\"18\" width=\"60\" height=\"3\"/><rect y=\"24\" width=\"60\" height=\"3\"/><rect y=\"30\" width=\"60\" height=\"3\"/><rect y=\"36\" width=\"60\" height=\"3\"/></g><rect width=\"24\" height=\"21\" fill=\"#3C3B6E\"/></svg>","PAR":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"13.3\" fill=\"#D52B1E\"/><rect y=\"13.3\" width=\"60\" height=\"13.4\" fill=\"#fff\"/><rect y=\"26.7\" width=\"60\" height=\"13.3\" fill=\"#0038A8\"/><circle cx=\"30\" cy=\"20\" r=\"3\" fill=\"#FEDF00\"/></svg>","AUS":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#012169\"/><rect width=\"30\" height=\"20\" fill=\"#012169\"/><path d=\"M0 0 L30 20 M30 0 L0 20\" stroke=\"#fff\" stroke-width=\"2\"/><path d=\"M0 0 L30 20 M30 0 L0 20\" stroke=\"#C8102E\" stroke-width=\"1\"/><path d=\"M15 0 L15 20 M0 10 L30 10\" stroke=\"#fff\" stroke-width=\"3\"/><path d=\"M15 0 L15 20 M0 10 L30 10\" stroke=\"#C8102E\" stroke-width=\"1.5\"/><g fill=\"#fff\"><path d=\"M14 25 L15 27 L17 27 L15.5 28.5 L16 30.5 L14 29.5 L12 30.5 L12.5 28.5 L11 27 L13 27 Z\"/><circle cx=\"45\" cy=\"15\" r=\"1\"/><circle cx=\"50\" cy=\"22\" r=\"1\"/><circle cx=\"42\" cy=\"28\" r=\"1\"/><circle cx=\"52\" cy=\"32\" r=\"1\"/><circle cx=\"46\" cy=\"36\" r=\"0.8\"/></g></svg>","TUR":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#E30A17\"/><circle cx=\"22\" cy=\"20\" r=\"8\" fill=\"#fff\"/><circle cx=\"24\" cy=\"20\" r=\"6.5\" fill=\"#E30A17\"/><path d=\"M32 20 L29 19 L31 21 L29 22 L32 21 L31 24 L33 21.5 L34 24 L34 21 L36 22 L34.5 20 L36 18 L34 19 L34 16 L33 18.5 L31 16 Z\" fill=\"#fff\"/></svg>","GER":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"13.3\" fill=\"#000\"/><rect y=\"13.3\" width=\"60\" height=\"13.4\" fill=\"#DD0000\"/><rect y=\"26.7\" width=\"60\" height=\"13.3\" fill=\"#FFCE00\"/></svg>","CUW":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#002B7F\"/><rect y=\"22\" width=\"60\" height=\"6\" fill=\"#F9E814\"/><path d=\"M11 8 L12 10 L14 10 L12.5 11.5 L13 13.5 L11 12.5 L9 13.5 L9.5 11.5 L8 10 L10 10 Z\" fill=\"#fff\"/><path d=\"M18 14 L18.7 15.5 L20.3 15.5 L19 16.5 L19.5 18 L18 17.2 L16.5 18 L17 16.5 L15.7 15.5 L17.3 15.5 Z\" fill=\"#fff\"/></svg>","CIV":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"20\" height=\"40\" fill=\"#F77F00\"/><rect x=\"20\" width=\"20\" height=\"40\" fill=\"#fff\"/><rect x=\"40\" width=\"20\" height=\"40\" fill=\"#009E60\"/></svg>","ECU":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"20\" fill=\"#FFDD00\"/><rect y=\"20\" width=\"60\" height=\"10\" fill=\"#034EA2\"/><rect y=\"30\" width=\"60\" height=\"10\" fill=\"#ED1C24\"/></svg>","NED":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"13.3\" fill=\"#AE1C28\"/><rect y=\"13.3\" width=\"60\" height=\"13.4\" fill=\"#fff\"/><rect y=\"26.7\" width=\"60\" height=\"13.3\" fill=\"#21468B\"/></svg>","JPN":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#fff\"/><circle cx=\"30\" cy=\"20\" r=\"10\" fill=\"#BC002D\"/></svg>","SWE":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#005293\"/><rect x=\"18\" width=\"6\" height=\"40\" fill=\"#FECC00\"/><rect y=\"17\" width=\"60\" height=\"6\" fill=\"#FECC00\"/></svg>","TUN":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#E70013\"/><circle cx=\"30\" cy=\"20\" r=\"9\" fill=\"#fff\"/><circle cx=\"30\" cy=\"20\" r=\"4.5\" fill=\"#E70013\"/><path d=\"M30 16 L31 19 L34 19 L31.5 21 L32.5 24 L30 22 L27.5 24 L28.5 21 L26 19 L29 19 Z\" fill=\"#fff\"/></svg>","BEL":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"20\" height=\"40\" fill=\"#000\"/><rect x=\"20\" width=\"20\" height=\"40\" fill=\"#FAE042\"/><rect x=\"40\" width=\"20\" height=\"40\" fill=\"#ED2939\"/></svg>","EGY":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"13.3\" fill=\"#CE1126\"/><rect y=\"13.3\" width=\"60\" height=\"13.4\" fill=\"#fff\"/><rect y=\"26.7\" width=\"60\" height=\"13.3\" fill=\"#000\"/><path d=\"M30 16 L31 19 L34 19 L31.5 21 L32.5 24 L30 22 L27.5 24 L28.5 21 L26 19 L29 19 Z\" fill=\"#C09300\"/></svg>","IRN":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"13.3\" fill=\"#239F40\"/><rect y=\"13.3\" width=\"60\" height=\"13.4\" fill=\"#fff\"/><rect y=\"26.7\" width=\"60\" height=\"13.3\" fill=\"#DA0000\"/><path d=\"M28 19 Q30 17 32 19 Q30 21 28 19\" fill=\"#DA0000\"/></svg>","NZL":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#00247D\"/><rect width=\"30\" height=\"20\" fill=\"#00247D\"/><path d=\"M0 0 L30 20 M30 0 L0 20\" stroke=\"#fff\" stroke-width=\"2\"/><path d=\"M0 0 L30 20 M30 0 L0 20\" stroke=\"#CC142B\" stroke-width=\"1\"/><path d=\"M15 0 L15 20 M0 10 L30 10\" stroke=\"#fff\" stroke-width=\"3\"/><path d=\"M15 0 L15 20 M0 10 L30 10\" stroke=\"#CC142B\" stroke-width=\"1.5\"/><g fill=\"#CC142B\"><circle cx=\"46\" cy=\"14\" r=\"1.2\"/><circle cx=\"52\" cy=\"22\" r=\"1.5\"/><circle cx=\"42\" cy=\"26\" r=\"1.3\"/><circle cx=\"50\" cy=\"32\" r=\"1.4\"/></g></svg>","ESP":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"10\" fill=\"#AA151B\"/><rect y=\"10\" width=\"60\" height=\"20\" fill=\"#F1BF00\"/><rect y=\"30\" width=\"60\" height=\"10\" fill=\"#AA151B\"/><rect x=\"13\" y=\"15\" width=\"6\" height=\"10\" fill=\"#AA151B\" opacity=\"0.7\"/></svg>","CPV":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#003893\"/><rect y=\"20\" width=\"60\" height=\"10\" fill=\"#fff\"/><rect y=\"22\" width=\"60\" height=\"6\" fill=\"#CF2027\"/><g fill=\"#F7D116\"><circle cx=\"20\" cy=\"24\" r=\"0.8\"/><circle cx=\"24\" cy=\"22\" r=\"0.8\"/><circle cx=\"22\" cy=\"26\" r=\"0.8\"/><circle cx=\"26\" cy=\"25\" r=\"0.8\"/><circle cx=\"28\" cy=\"23\" r=\"0.8\"/></g></svg>","KSA":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#006C35\"/><rect x=\"8\" y=\"28\" width=\"44\" height=\"2\" fill=\"#fff\"/><text x=\"30\" y=\"18\" font-family=\"Arial\" font-size=\"6\" fill=\"#fff\" text-anchor=\"middle\" font-weight=\"bold\">الله</text></svg>","URU":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#fff\"/><g fill=\"#0038A8\"><rect y=\"4.4\" width=\"60\" height=\"4.4\"/><rect y=\"13.3\" width=\"60\" height=\"4.4\"/><rect y=\"22.2\" width=\"60\" height=\"4.4\"/><rect y=\"31.1\" width=\"60\" height=\"4.4\"/></g><rect width=\"22\" height=\"22\" fill=\"#fff\"/><circle cx=\"11\" cy=\"11\" r=\"5\" fill=\"#FCD116\"/></svg>","FRA":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"20\" height=\"40\" fill=\"#002654\"/><rect x=\"20\" width=\"20\" height=\"40\" fill=\"#fff\"/><rect x=\"40\" width=\"20\" height=\"40\" fill=\"#ED2939\"/></svg>","IRQ":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"13.3\" fill=\"#CE1126\"/><rect y=\"13.3\" width=\"60\" height=\"13.4\" fill=\"#fff\"/><rect y=\"26.7\" width=\"60\" height=\"13.3\" fill=\"#000\"/><text x=\"30\" y=\"23\" font-family=\"Arial\" font-size=\"5\" fill=\"#007A3D\" text-anchor=\"middle\" font-weight=\"bold\">الله أكبر</text></svg>","SEN":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"20\" height=\"40\" fill=\"#00853F\"/><rect x=\"20\" width=\"20\" height=\"40\" fill=\"#FDEF42\"/><rect x=\"40\" width=\"20\" height=\"40\" fill=\"#E31B23\"/><path d=\"M30 16 L31 19 L34 19 L31.5 21 L32.5 24 L30 22 L27.5 24 L28.5 21 L26 19 L29 19 Z\" fill=\"#00853F\"/></svg>","NOR":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#EF2B2D\"/><rect x=\"14\" width=\"6\" height=\"40\" fill=\"#fff\"/><rect y=\"17\" width=\"60\" height=\"6\" fill=\"#fff\"/><rect x=\"15.5\" width=\"3\" height=\"40\" fill=\"#002868\"/><rect y=\"18.5\" width=\"60\" height=\"3\" fill=\"#002868\"/></svg>","ARG":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"13.3\" fill=\"#75AADB\"/><rect y=\"13.3\" width=\"60\" height=\"13.4\" fill=\"#fff\"/><rect y=\"26.7\" width=\"60\" height=\"13.3\" fill=\"#75AADB\"/><circle cx=\"30\" cy=\"20\" r=\"3\" fill=\"#FCBF49\"/></svg>","ALG":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"30\" height=\"40\" fill=\"#006233\"/><rect x=\"30\" width=\"30\" height=\"40\" fill=\"#fff\"/><circle cx=\"30\" cy=\"20\" r=\"6\" fill=\"none\" stroke=\"#D21034\" stroke-width=\"1.2\"/><path d=\"M28 16 L29 19 L32 19 L29.5 21 L30.5 24 L28 22 L25.5 24 L26.5 21 L24 19 L27 19 Z\" fill=\"#D21034\"/></svg>","AUT":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"13.3\" fill=\"#ED2939\"/><rect y=\"13.3\" width=\"60\" height=\"13.4\" fill=\"#fff\"/><rect y=\"26.7\" width=\"60\" height=\"13.3\" fill=\"#ED2939\"/></svg>","JOR":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"13.3\" fill=\"#000\"/><rect y=\"13.3\" width=\"60\" height=\"13.4\" fill=\"#fff\"/><rect y=\"26.7\" width=\"60\" height=\"13.3\" fill=\"#007A3D\"/><path d=\"M0 0 L20 20 L0 40 Z\" fill=\"#CE1126\"/><path d=\"M6 18 L7 20 L9 20 L7.5 21.5 L8 23.5 L6 22.5 L4 23.5 L4.5 21.5 L3 20 L5 20 Z\" fill=\"#fff\"/></svg>","POR":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"40\" fill=\"#006600\"/><rect x=\"24\" width=\"36\" height=\"40\" fill=\"#FF0000\"/><circle cx=\"24\" cy=\"20\" r=\"5.5\" fill=\"#FFD700\" stroke=\"#000\" stroke-width=\"0.3\"/><circle cx=\"24\" cy=\"20\" r=\"3.5\" fill=\"#fff\" stroke=\"#000\" stroke-width=\"0.3\"/><rect x=\"22\" y=\"18\" width=\"4\" height=\"4\" fill=\"#0033A0\"/></svg>","COD":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#007FFF\"/><path d=\"M0 0 L60 40 L60 30 L15 0 Z\" fill=\"#CE1021\"/><path d=\"M0 0 L60 40 L60 35 L10 0 Z\" fill=\"#F7D618\"/><path d=\"M0 0 L15 0 L60 30 L60 25 L10 0 Z\" fill=\"#fff\" stroke-width=\"0\"/><path d=\"M5 7 L6.5 11 L10.5 11 L7.2 13.5 L8.5 17.5 L5 15 L1.5 17.5 L2.8 13.5 L-0.5 11 L3.5 11 Z\" fill=\"#F7D618\"/></svg>","UZB":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"13.3\" fill=\"#0099B5\"/><rect y=\"13.3\" width=\"60\" height=\"13.4\" fill=\"#fff\"/><rect y=\"13\" width=\"60\" height=\"0.5\" fill=\"#CE1126\"/><rect y=\"26.5\" width=\"60\" height=\"0.5\" fill=\"#CE1126\"/><rect y=\"26.7\" width=\"60\" height=\"13.3\" fill=\"#1EB53A\"/><circle cx=\"13\" cy=\"7\" r=\"3\" fill=\"none\" stroke=\"#fff\" stroke-width=\"0.8\"/><circle cx=\"14.5\" cy=\"7\" r=\"3\" fill=\"#0099B5\"/></svg>","COL":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"20\" fill=\"#FCD116\"/><rect y=\"20\" width=\"60\" height=\"10\" fill=\"#003893\"/><rect y=\"30\" width=\"60\" height=\"10\" fill=\"#CE1126\"/></svg>","ENG":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"40\" fill=\"#fff\"/><rect y=\"16\" width=\"60\" height=\"8\" fill=\"#CE1124\"/><rect x=\"26\" width=\"8\" height=\"40\" fill=\"#CE1124\"/></svg>","CRO":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"13.3\" fill=\"#FF0000\"/><rect y=\"13.3\" width=\"60\" height=\"13.4\" fill=\"#fff\"/><rect y=\"26.7\" width=\"60\" height=\"13.3\" fill=\"#171796\"/><g><rect x=\"26\" y=\"14\" width=\"2.7\" height=\"2.7\" fill=\"#FF0000\"/><rect x=\"28.7\" y=\"14\" width=\"2.7\" height=\"2.7\" fill=\"#fff\"/><rect x=\"31.4\" y=\"14\" width=\"2.7\" height=\"2.7\" fill=\"#FF0000\"/><rect x=\"26\" y=\"16.7\" width=\"2.7\" height=\"2.7\" fill=\"#fff\"/><rect x=\"28.7\" y=\"16.7\" width=\"2.7\" height=\"2.7\" fill=\"#FF0000\"/><rect x=\"31.4\" y=\"16.7\" width=\"2.7\" height=\"2.7\" fill=\"#fff\"/><rect x=\"26\" y=\"19.4\" width=\"2.7\" height=\"2.7\" fill=\"#FF0000\"/><rect x=\"28.7\" y=\"19.4\" width=\"2.7\" height=\"2.7\" fill=\"#fff\"/><rect x=\"31.4\" y=\"19.4\" width=\"2.7\" height=\"2.7\" fill=\"#FF0000\"/></g></svg>","GHA":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"60\" height=\"13.3\" fill=\"#CE1126\"/><rect y=\"13.3\" width=\"60\" height=\"13.4\" fill=\"#FCD116\"/><rect y=\"26.7\" width=\"60\" height=\"13.3\" fill=\"#006B3F\"/><path d=\"M30 16.5 L31 19.5 L34 19.5 L31.5 21.5 L32.5 24.5 L30 22.5 L27.5 24.5 L28.5 21.5 L26 19.5 L29 19.5 Z\" fill=\"#000\"/></svg>","PAN":"<svg viewBox=\"0 0 60 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"30\" height=\"20\" fill=\"#fff\"/><rect x=\"30\" width=\"30\" height=\"20\" fill=\"#D21034\"/><rect y=\"20\" width=\"30\" height=\"20\" fill=\"#005AA7\"/><rect x=\"30\" y=\"20\" width=\"30\" height=\"20\" fill=\"#fff\"/><path d=\"M15 5 L16 8 L19 8 L16.5 10 L17.5 13 L15 11 L12.5 13 L13.5 10 L11 8 L14 8 Z\" fill=\"#005AA7\"/><path d=\"M45 25 L46 28 L49 28 L46.5 30 L47.5 33 L45 31 L42.5 33 L43.5 30 L41 28 L44 28 Z\" fill=\"#D21034\"/></svg>"};</script>
@@ -2088,8 +2507,121 @@ document.querySelectorAll('.player-tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById('playerFrame').src = tab.dataset.src;
     document.getElementById('playerTitle').textContent = tab.dataset.title;
+    const channelLink = document.getElementById('playerChannelLink');
+    if (channelLink && tab.dataset.channel) channelLink.href = tab.dataset.channel;
   });
 });
+
+//============================================================
+// WATCH OVERLAY - opens broadcaster in-page popup with safe fallback
+//============================================================
+(function setupWatchOverlay() {
+  const overlay = document.getElementById('watchOverlay');
+  if (!overlay) return;
+  const backdrop = document.getElementById('watchOverlayBackdrop');
+  const closeBtn = document.getElementById('watchOverlayClose');
+  const titleEl = document.getElementById('watchOverlayTitle');
+  const bodyEl = document.getElementById('watchOverlayBody');
+  const footEl = document.getElementById('watchOverlayFoot');
+  const externalBtn = document.getElementById('watchOverlayExternal');
+  const grid = document.getElementById('broadcasterGrid');
+  let loadCheckTimer = null;
+  let currentExternalUrl = '';
+
+  function openOverlay(name, embedUrl, externalUrl) {
+    titleEl.textContent = name || 'Watching';
+    currentExternalUrl = externalUrl || embedUrl;
+    externalBtn.href = currentExternalUrl;
+    footEl.style.display = 'none';
+    bodyEl.innerHTML =
+      '<div class="watch-loading" id="watchLoading">' +
+        '<div>' +
+          '<div class="watch-loading-spinner"></div>' +
+          '<div class="watch-loading-text">Loading ' + escapeHtml(name) + '...</div>' +
+        '</div>' +
+      '</div>';
+
+    // Inject iframe after the loading state so the spinner is visible during connect
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.setAttribute('referrerpolicy', 'no-referrer');
+    iframe.style.position = 'absolute';
+    iframe.style.inset = '0';
+    iframe.style.zIndex = '2';
+    iframe.src = embedUrl;
+    bodyEl.appendChild(iframe);
+
+    // Detect if iframe loaded or got blocked
+    let loaded = false;
+    iframe.addEventListener('load', () => {
+      loaded = true;
+      const spinner = document.getElementById('watchLoading');
+      if (spinner) spinner.remove();
+    });
+
+    // If iframe hasn't loaded within 2.5s, assume it's blocked and show fallback
+    clearTimeout(loadCheckTimer);
+    loadCheckTimer = setTimeout(() => {
+      if (!loaded) {
+        const spinner = document.getElementById('watchLoading');
+        if (spinner) spinner.remove();
+        footEl.style.display = 'block';
+      }
+    }, 2500);
+
+    // Also check after a longer window — some browsers fire load event for X-Frame blocked frames
+    // so we double-check by attempting to read the iframe (will throw if blocked)
+    setTimeout(() => {
+      try {
+        // accessing contentDocument throws on cross-origin successful loads (that's fine)
+        // but if the iframe was blocked, src might be unchanged or document is empty
+        if (!loaded) {
+          footEl.style.display = 'block';
+        }
+      } catch (e) { /* expected for cross-origin */ }
+    }, 3500);
+
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('overlay-open');
+  }
+
+  function closeOverlay() {
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('overlay-open');
+    clearTimeout(loadCheckTimer);
+    // Clear iframe to stop any audio/video and free resources
+    setTimeout(() => { bodyEl.innerHTML = ''; }, 300);
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  // Attach click handlers to broadcaster cards
+  if (grid) {
+    grid.addEventListener('click', (e) => {
+      const card = e.target.closest('.broadcaster-card');
+      if (!card) return;
+      e.preventDefault();
+      const name = card.dataset.name || card.querySelector('.bc-name')?.textContent || 'Live';
+      const embed = card.dataset.embed || card.href;
+      const external = card.href;
+      openOverlay(name, embed, external);
+    });
+  }
+
+  // Close handlers
+  closeBtn.addEventListener('click', closeOverlay);
+  backdrop.addEventListener('click', closeOverlay);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay.classList.contains('open')) closeOverlay();
+  });
+})();
 
 //============================================================
 // DEXSCREENER
