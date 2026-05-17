@@ -978,6 +978,28 @@
     color: var(--text-dim);
     letter-spacing: 0.5px;
   }
+  .nm-updated {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    margin-top: 0.45rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    justify-content: flex-end;
+    opacity: 0.7;
+  }
+  .nm-updated:empty { display: none; }
+  .lu-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 6px rgba(74, 222, 128, 0.6);
+    animation: pulseDot 2s infinite;
+  }
 
   /* Broadcaster notice (info banner) */
   .broadcaster-notice {
@@ -1944,6 +1966,7 @@
     .broadcaster-grid { grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
     .next-match-banner { flex-direction: column; align-items: flex-start; gap: 0.85rem; padding: 1rem 1.1rem; }
     .nm-right { text-align: left; }
+    .nm-updated { justify-content: flex-start; }
     .broadcaster-notice { font-size: 0.72rem; padding: 0.85rem 0.95rem; }
     .broadcaster-card { padding: 0.85rem 0.9rem; }
     .bc-name { font-size: 0.9rem; padding-right: 2.5rem; }
@@ -2117,6 +2140,7 @@
     <div class="nm-right">
       <div class="nm-meta" id="nmMeta">Tournament kicks off June 11, 2026</div>
       <div class="nm-venue" id="nmVenue">Estadio Azteca · Mexico City</div>
+      <div class="nm-updated" id="lastUpdated"></div>
     </div>
   </div>
 
@@ -3299,7 +3323,18 @@ async function checkBalance() {
 }
 
 //============================================================
-// LIVE FIXTURES from football-data.org
+// LIVE TOURNAMENT DATA - Multi-API cascade with smart fallbacks
+//
+// Cascades through:
+//  1. football-data.org/v4 (free, no auth, primary)
+//  2. TheSportsDB (free, no auth, fallback)
+//  3. Cached state in localStorage (last known good)
+//
+// Updates:
+//  - Group stage tables (12 groups, all sorted by points/GD/GF)
+//  - Live match indicator pulse on teams currently playing
+//  - Next match banner (auto-updates with current fixture)
+//  - Final score + champion detection on July 19
 //============================================================
 const TEAM_NAME_TO_CODE = {
   'Mexico': 'MEX', 'South Africa': 'RSA', 'South Korea': 'KOR', 'Korea Republic': 'KOR', 'Republic of Korea': 'KOR', 'Czechia': 'CZE', 'Czech Republic': 'CZE',
@@ -3318,6 +3353,7 @@ const TEAM_NAME_TO_CODE = {
 
 function resolveTeamCode(team) {
   if (!team) return null;
+  if (typeof team === 'string') return TEAM_NAME_TO_CODE[team] || null;
   if (team.tla && STATS[team.tla]) return team.tla;
   const nm = team.name || team.shortName;
   if (nm && TEAM_NAME_TO_CODE[nm]) return TEAM_NAME_TO_CODE[nm];
@@ -3331,56 +3367,278 @@ function resetStats() {
   }
 }
 
-async function loadLiveFixtures() {
-  try {
-    const res = await fetch('https://api.football-data.org/v4/competitions/WC/matches');
-    if (!res.ok) return;
-    const data = await res.json();
-    if (!data.matches || !data.matches.length) return;
+// Track current tournament state in-memory
+const TOURNAMENT_STATE = {
+  matches: [],          // raw normalized matches from whichever API responded
+  liveMatch: null,      // currently playing match if any
+  nextMatch: null,      // upcoming match (closest in future)
+  finalMatch: null,     // the final (July 19, 2026) if found
+  lastUpdate: null,     // Date timestamp
+  source: null          // which API responded successfully
+};
 
-    resetStats();
-    data.matches.forEach(m => {
-      const homeCode = resolveTeamCode(m.homeTeam);
-      const awayCode = resolveTeamCode(m.awayTeam);
-      if (!homeCode || !awayCode || !STATS[homeCode] || !STATS[awayCode]) return;
-      if (STATS[homeCode].group !== STATS[awayCode].group) return;
+// Normalize a match from any source into a consistent shape
+function normalizeMatch(m, source) {
+  if (source === 'football-data') {
+    return {
+      homeCode: resolveTeamCode(m.homeTeam),
+      awayCode: resolveTeamCode(m.awayTeam),
+      homeName: m.homeTeam?.name,
+      awayName: m.awayTeam?.name,
+      homeScore: m.score?.fullTime?.home ?? m.score?.halfTime?.home,
+      awayScore: m.score?.fullTime?.away ?? m.score?.halfTime?.away,
+      status: m.status,
+      utcDate: m.utcDate,
+      stage: m.stage,
+      venue: m.venue
+    };
+  }
+  if (source === 'thesportsdb') {
+    return {
+      homeCode: resolveTeamCode(m.strHomeTeam),
+      awayCode: resolveTeamCode(m.strAwayTeam),
+      homeName: m.strHomeTeam,
+      awayName: m.strAwayTeam,
+      homeScore: m.intHomeScore != null ? parseInt(m.intHomeScore, 10) : null,
+      awayScore: m.intAwayScore != null ? parseInt(m.intAwayScore, 10) : null,
+      status: m.strStatus,
+      utcDate: m.dateEvent && m.strTime ? m.dateEvent + 'T' + m.strTime + 'Z' : null,
+      stage: m.strRound,
+      venue: m.strVenue
+    };
+  }
+  return null;
+}
 
-      const isLive = m.status === 'IN_PLAY' || m.status === 'PAUSED' || m.status === 'LIVE';
-      const isFinished = m.status === 'FINISHED';
+// Try football-data.org first
+async function fetchFromFootballData() {
+  const fetchP = fetch('https://api.football-data.org/v4/competitions/WC/matches').then(r => r.ok ? r.json() : null);
+  const timeoutP = new Promise((_, rej) => setTimeout(() => rej('timeout'), 6000));
+  const data = await Promise.race([fetchP, timeoutP]);
+  if (!data || !data.matches) return null;
+  return data.matches.map(m => normalizeMatch(m, 'football-data')).filter(Boolean);
+}
 
-      if (isLive) {
-        STATS[homeCode].live = true;
-        STATS[awayCode].live = true;
-      }
+// Try TheSportsDB as fallback
+async function fetchFromSportsDB() {
+  const fetchP = fetch('https://www.thesportsdb.com/api/v1/json/3/eventsseason.php?id=4429&s=2026').then(r => r.ok ? r.json() : null);
+  const timeoutP = new Promise((_, rej) => setTimeout(() => rej('timeout'), 6000));
+  const data = await Promise.race([fetchP, timeoutP]);
+  if (!data || !data.events) return null;
+  return data.events.map(m => normalizeMatch(m, 'thesportsdb')).filter(Boolean);
+}
 
-      if (isLive || isFinished) {
-        const hs = m.score?.fullTime?.home ?? m.score?.halfTime?.home;
-        const as = m.score?.fullTime?.away ?? m.score?.halfTime?.away;
-        if (hs == null || as == null) return;
+// Apply matches to group stats
+function applyMatchesToStats(matches) {
+  resetStats();
+  matches.forEach(m => {
+    if (!m.homeCode || !m.awayCode || !STATS[m.homeCode] || !STATS[m.awayCode]) return;
+    // Only count group stage games toward group tables
+    if (STATS[m.homeCode].group !== STATS[m.awayCode].group) return;
 
-        const home = STATS[homeCode];
-        const away = STATS[awayCode];
-        home.p += 1; away.p += 1;
-        home.gf += hs; home.ga += as;
-        away.gf += as; away.ga += hs;
-        home.gd = home.gf - home.ga;
-        away.gd = away.gf - away.ga;
+    const isLive = m.status === 'IN_PLAY' || m.status === 'PAUSED' || m.status === 'LIVE' || m.status === 'Live';
+    const isFinished = m.status === 'FINISHED' || m.status === 'Match Finished' || m.status === 'FT';
 
-        if (hs > as) { home.w += 1; home.pts += 3; away.l += 1; }
-        else if (hs < as) { away.w += 1; away.pts += 3; home.l += 1; }
-        else { home.d += 1; away.d += 1; home.pts += 1; away.pts += 1; }
-      }
-    });
+    if (isLive) {
+      STATS[m.homeCode].live = true;
+      STATS[m.awayCode].live = true;
+    }
 
-    const activeFilter = document.querySelector('.group-btn.active')?.dataset.filter || 'all';
-    renderGroups(activeFilter);
-    renderAZ();
-  } catch (e) {
-    console.log('Live fixtures unavailable yet:', e.message);
+    if ((isLive || isFinished) && m.homeScore != null && m.awayScore != null) {
+      const home = STATS[m.homeCode];
+      const away = STATS[m.awayCode];
+      home.p += 1; away.p += 1;
+      home.gf += m.homeScore; home.ga += m.awayScore;
+      away.gf += m.awayScore; away.ga += m.homeScore;
+      home.gd = home.gf - home.ga;
+      away.gd = away.gf - away.ga;
+      if (m.homeScore > m.awayScore) { home.w += 1; home.pts += 3; away.l += 1; }
+      else if (m.homeScore < m.awayScore) { away.w += 1; away.pts += 3; home.l += 1; }
+      else { home.d += 1; away.d += 1; home.pts += 1; away.pts += 1; }
+    }
+  });
+}
+
+// Find next upcoming match
+function findNextMatch(matches) {
+  const now = Date.now();
+  const upcoming = matches
+    .filter(m => m.utcDate && new Date(m.utcDate).getTime() > now && (m.status === 'SCHEDULED' || m.status === 'TIMED' || m.status === 'Not Started' || !m.status))
+    .sort((a, b) => new Date(a.utcDate).getTime() - new Date(b.utcDate).getTime());
+  return upcoming[0] || null;
+}
+
+// Find currently live match
+function findLiveMatch(matches) {
+  return matches.find(m =>
+    m.status === 'IN_PLAY' || m.status === 'PAUSED' || m.status === 'LIVE' || m.status === 'Live'
+  ) || null;
+}
+
+// Find the final match
+function findFinalMatch(matches) {
+  return matches.find(m =>
+    (m.stage === 'FINAL' || m.stage === 'Final' || (m.utcDate && m.utcDate.startsWith('2026-07-19')))
+  ) || null;
+}
+
+// Auto-detect champion from final match
+function autoDetectChampion(matches) {
+  const finalM = findFinalMatch(matches);
+  if (!finalM) return;
+  const isFinished = finalM.status === 'FINISHED' || finalM.status === 'Match Finished' || finalM.status === 'FT';
+  if (!isFinished || finalM.homeScore == null || finalM.awayScore == null) return;
+
+  // Determine winner (in case of penalties, both fullTime scores are equal but winner field may exist in football-data)
+  let winnerCode, loserCode, winnerName, loserName, scoreStr;
+  if (finalM.homeScore > finalM.awayScore) {
+    winnerCode = finalM.homeCode; loserCode = finalM.awayCode;
+    winnerName = finalM.homeName; loserName = finalM.awayName;
+    scoreStr = finalM.homeScore + ' - ' + finalM.awayScore;
+  } else if (finalM.awayScore > finalM.homeScore) {
+    winnerCode = finalM.awayCode; loserCode = finalM.homeCode;
+    winnerName = finalM.awayName; loserName = finalM.homeName;
+    scoreStr = finalM.awayScore + ' - ' + finalM.homeScore;
+  } else {
+    // Draw on score but final must have a winner (penalties) - we can't reliably know, skip
+    return;
+  }
+
+  if (winnerCode) {
+    CHAMPION.set = true;
+    CHAMPION.code = winnerCode;
+    CHAMPION.name = winnerName;
+    CHAMPION.score = scoreStr;
+    CHAMPION.opponent = loserName;
+    // Persist
+    try { localStorage.setItem('fwc_champion', JSON.stringify(CHAMPION)); } catch (e) {}
   }
 }
-loadLiveFixtures();
-setInterval(loadLiveFixtures, 60000);
+
+// Update the Next Match banner with real data
+function updateNextMatchBanner() {
+  const fixtureEl = document.getElementById('nmFixture');
+  const metaEl = document.getElementById('nmMeta');
+  const venueEl = document.getElementById('nmVenue');
+  if (!fixtureEl) return;
+
+  // Priority 1: Live match in progress
+  if (TOURNAMENT_STATE.liveMatch) {
+    const m = TOURNAMENT_STATE.liveMatch;
+    fixtureEl.textContent = (m.homeName || '?').toUpperCase() + ' ' +
+      (m.homeScore ?? 0) + ' - ' + (m.awayScore ?? 0) + ' ' +
+      (m.awayName || '?').toUpperCase();
+    if (metaEl) metaEl.textContent = 'LIVE NOW · ' + (m.stage || 'World Cup');
+    if (venueEl) venueEl.textContent = m.venue || '2026 FIFA World Cup';
+    const tagEl = document.querySelector('.nm-tag');
+    if (tagEl) tagEl.innerHTML = '<span class="nm-pulse"></span>MATCH LIVE';
+    return;
+  }
+
+  // Priority 2: Next scheduled match from API
+  if (TOURNAMENT_STATE.nextMatch) {
+    const m = TOURNAMENT_STATE.nextMatch;
+    fixtureEl.textContent = (m.homeName || 'TBD').toUpperCase() + ' VS ' + (m.awayName || 'TBD').toUpperCase();
+    if (metaEl && m.utcDate) {
+      const dt = new Date(m.utcDate);
+      metaEl.textContent = dt.toLocaleString('en-US', {
+        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short'
+      });
+    }
+    if (venueEl) venueEl.textContent = m.venue || (m.stage || '2026 FIFA World Cup');
+    return;
+  }
+  // Otherwise keep the fallback opener that was set on init
+}
+
+// Update last-updated indicator
+function updateLastUpdated() {
+  const el = document.getElementById('lastUpdated');
+  if (!el || !TOURNAMENT_STATE.lastUpdate) return;
+  const secs = Math.floor((Date.now() - TOURNAMENT_STATE.lastUpdate) / 1000);
+  let label;
+  if (secs < 30) label = 'just now';
+  else if (secs < 60) label = secs + 's ago';
+  else if (secs < 3600) label = Math.floor(secs / 60) + 'm ago';
+  else label = Math.floor(secs / 3600) + 'h ago';
+  el.innerHTML = '<span class="lu-dot"></span>Live · updated ' + label +
+    (TOURNAMENT_STATE.source ? ' · ' + TOURNAMENT_STATE.source : '');
+}
+
+// Main tournament data loader with API cascade
+async function loadTournamentData() {
+  let matches = null;
+  let source = null;
+
+  // Try cached state first to keep UI populated during fetch
+  if (!TOURNAMENT_STATE.matches.length) {
+    try {
+      const cached = localStorage.getItem('fwc_matches_cache');
+      const cachedChamp = localStorage.getItem('fwc_champion');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.matches && parsed.matches.length) {
+          TOURNAMENT_STATE.matches = parsed.matches;
+          applyMatchesToStats(parsed.matches);
+        }
+      }
+      if (cachedChamp) {
+        const c = JSON.parse(cachedChamp);
+        Object.assign(CHAMPION, c);
+      }
+    } catch (e) {}
+  }
+
+  // Try football-data.org
+  try {
+    matches = await fetchFromFootballData();
+    if (matches && matches.length) source = 'football-data.org';
+  } catch (e) {}
+
+  // Fallback to TheSportsDB
+  if (!matches || !matches.length) {
+    try {
+      matches = await fetchFromSportsDB();
+      if (matches && matches.length) source = 'TheSportsDB';
+    } catch (e) {}
+  }
+
+  // If both failed, keep cached state
+  if (!matches || !matches.length) {
+    updateLastUpdated();
+    return;
+  }
+
+  // Apply data
+  TOURNAMENT_STATE.matches = matches;
+  TOURNAMENT_STATE.liveMatch = findLiveMatch(matches);
+  TOURNAMENT_STATE.nextMatch = findNextMatch(matches);
+  TOURNAMENT_STATE.finalMatch = findFinalMatch(matches);
+  TOURNAMENT_STATE.lastUpdate = Date.now();
+  TOURNAMENT_STATE.source = source;
+
+  applyMatchesToStats(matches);
+  autoDetectChampion(matches);
+
+  // Cache for next page load
+  try {
+    localStorage.setItem('fwc_matches_cache', JSON.stringify({
+      matches: matches,
+      ts: Date.now()
+    }));
+  } catch (e) {}
+
+  // Refresh UI
+  const activeFilter = document.querySelector('.group-btn.active')?.dataset.filter || 'all';
+  if (typeof renderGroups === 'function') renderGroups(activeFilter);
+  if (typeof renderAZ === 'function') renderAZ();
+  updateNextMatchBanner();
+  updateLastUpdated();
+}
+
+loadTournamentData();
+setInterval(loadTournamentData, 60000);     // Refresh every minute
+setInterval(updateLastUpdated, 10000);      // Update "x seconds ago" label every 10s
 
 //============================================================
 // MOBILE MENU
