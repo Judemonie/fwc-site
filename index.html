@@ -3410,7 +3410,17 @@ function normalizeMatch(m, source) {
   return null;
 }
 
-// Try football-data.org first
+// Try our own proxy first (uses your $19 API-Football plan, cached server-side)
+async function fetchFromProxy() {
+  const fetchP = fetch('https://fwc-goal.onrender.com/api/fwc/matches').then(r => r.ok ? r.json() : null);
+  const timeoutP = new Promise((_, rej) => setTimeout(() => rej('timeout'), 8000));
+  const data = await Promise.race([fetchP, timeoutP]);
+  if (!data || !data.matches) return null;
+  // Proxy returns football-data-shaped matches, so we reuse that normalizer
+  return data.matches.map(m => normalizeMatch(m, 'football-data')).filter(Boolean);
+}
+
+// Try football-data.org as fallback
 async function fetchFromFootballData() {
   const fetchP = fetch('https://api.football-data.org/v4/competitions/WC/matches').then(r => r.ok ? r.json() : null);
   const timeoutP = new Promise((_, rej) => setTimeout(() => rej('timeout'), 6000));
@@ -3589,11 +3599,19 @@ async function loadTournamentData() {
     } catch (e) {}
   }
 
-  // Try football-data.org
+  // Try our own proxy (API-Football, paid plan, cached)
   try {
-    matches = await fetchFromFootballData();
-    if (matches && matches.length) source = 'football-data.org';
+    matches = await fetchFromProxy();
+    if (matches && matches.length) source = 'live';
   } catch (e) {}
+
+  // Try football-data.org
+  if (!matches || !matches.length) {
+    try {
+      matches = await fetchFromFootballData();
+      if (matches && matches.length) source = 'football-data.org';
+    } catch (e) {}
+  }
 
   // Fallback to TheSportsDB
   if (!matches || !matches.length) {
